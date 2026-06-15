@@ -108,18 +108,12 @@ int overrideNodeCreation = 0;
 
 static NSString *getElementDescription(ELMCellNode *node) {
     if (![node isKindOfClass:%c(ELMCellNode)]) return nil;
-    YTELMContext *context = [node valueForKey:@"_context"];
-    YTElementsCellController *cellController = [context parentResponder];
-    if (![cellController isKindOfClass:%c(YTElementsCellController)]) {
-        HBLogDebug(@"RYD: Parent responder is not YTElementsCellController, instead found %@", cellController);
-        return nil;
-    }
-    YTIElementRenderer *renderer = [cellController elementEntry];
-    return [renderer description];
+    ELMNodeController *controller = [node controller];
+    return [[controller owningComponent] description];
 }
 
 static BOOL isVideoScrollableActionBar(ASCollectionView *collectionView, ELMCellNode *node) {
-    if (collectionView.hasDislikeIntent || [collectionView.accessibilityIdentifier isEqualToString:@"id.video.scrollable_action_bar"])
+    if ([collectionView.accessibilityIdentifier isEqualToString:@"id.video.scrollable_action_bar"])
         return YES;
     return [getElementDescription(node) containsString:@"compactify_video_action_bar.eml"];
 }
@@ -267,7 +261,7 @@ static void setTextColor(NSMutableAttributedString *text) {
             infoLikeTextNode.attributedText = likeText;
         }
     }
-    if (isVideoScrollableActionBar(self, node)) {
+    else if (isVideoScrollableActionBar(self, node)) {
         /*
         Structure for the latest design
         No existing ELMTextNode to work with :(
@@ -414,27 +408,26 @@ static void setTextColor(NSMutableAttributedString *text) {
 
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
     %orig;
-    if (self.hasDislikeIntent && TweakEnabled()) {
-        if (dislikeRollingNumberNode) {
-            YTRollingNumberView *likeView = [likeRollingNumberNode valueForKey:@"_rollingNumberView"];
-            [dislikeRollingNumberNode updateCount:dislikeRollingNumberNode.updatedCount color:likeView.color];
-        }
-        if (infoDislikeRollingNumberNode) {
-            YTRollingNumberView *likeView = [infoLikeRollingNumberNode valueForKey:@"_rollingNumberView"];
-            [infoDislikeRollingNumberNode updateCount:infoDislikeRollingNumberNode.updatedCount color:likeView.color];
-        }
-        if (dislikeTextNode) {
-            NSString *dislikeText = dislikeTextNode.attributedText.string;
-            mutableDislikeText = [[NSMutableAttributedString alloc] initWithAttributedString:likeTextNode.attributedText];
-            mutableDislikeText.mutableString.string = dislikeText;
-            dislikeTextNode.attributedText = mutableDislikeText;
-        }
-        if (infoLikeTextNode) {
-            NSString *likeDislikeText = infoLikeTextNode.attributedText.string;
-            NSMutableAttributedString *mutableInfoLikeDislikeText = [[NSMutableAttributedString alloc] initWithAttributedString:infoLikeTextNode.attributedText];
-            mutableInfoLikeDislikeText.mutableString.string = likeDislikeText;
-            infoLikeTextNode.attributedText = mutableInfoLikeDislikeText;
-        }
+    if (!self.hasDislikeIntent || TweakEnabled()) return;
+    if (dislikeRollingNumberNode) {
+        YTRollingNumberView *likeView = [likeRollingNumberNode valueForKey:@"_rollingNumberView"];
+        [dislikeRollingNumberNode updateCount:dislikeRollingNumberNode.updatedCount color:likeView.color];
+    }
+    if (infoDislikeRollingNumberNode) {
+        YTRollingNumberView *likeView = [infoLikeRollingNumberNode valueForKey:@"_rollingNumberView"];
+        [infoDislikeRollingNumberNode updateCount:infoDislikeRollingNumberNode.updatedCount color:likeView.color];
+    }
+    if (dislikeTextNode) {
+        NSString *dislikeText = dislikeTextNode.attributedText.string;
+        mutableDislikeText = [[NSMutableAttributedString alloc] initWithAttributedString:likeTextNode.attributedText];
+        mutableDislikeText.mutableString.string = dislikeText;
+        dislikeTextNode.attributedText = mutableDislikeText;
+    }
+    if (infoLikeTextNode) {
+        NSString *likeDislikeText = infoLikeTextNode.attributedText.string;
+        NSMutableAttributedString *mutableInfoLikeDislikeText = [[NSMutableAttributedString alloc] initWithAttributedString:infoLikeTextNode.attributedText];
+        mutableInfoLikeDislikeText.mutableString.string = likeDislikeText;
+        infoLikeTextNode.attributedText = mutableInfoLikeDislikeText;
     }
 }
 
@@ -451,19 +444,17 @@ static void setTextNodeColor(ELMTextNode *node, UIColor *color) {
 
 - (void)pageStyleDidChange:(NSInteger)pageStyle {
     %orig;
-    if ([self.pageStylingDelegate isKindOfClass:%c(YTWatchNextResultsViewController)]) {
-        YTCommonColorPalette *colorPalette = currentColorPalette();
-        UIColor *textColor = [colorPalette textPrimary];
-        setTextNodeColor(likeTextNode, textColor);
-        setTextNodeColor(dislikeTextNode, textColor);
-    }
+    if (![self.pageStylingDelegate isKindOfClass:%c(YTWatchNextResultsViewController)]) return;
+    YTCommonColorPalette *colorPalette = currentColorPalette();
+    UIColor *textColor = [colorPalette textPrimary];
+    setTextNodeColor(likeTextNode, textColor);
+    setTextNodeColor(dislikeTextNode, textColor);
 }
 
 %end
 
 static void layoutActionBar(YTReelWatchPlaybackOverlayView *self) {
-    if (!TweakEnabled()) return;
-    if (self.didGetVote) return;
+    if (!TweakEnabled() || self.didGetVote) return;
     id spvc = [self parentResponder];
     YTReelModel *model = [spvc valueForKey:@"_model"];
     NSString *videoId;

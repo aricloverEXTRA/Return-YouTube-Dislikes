@@ -14,7 +14,6 @@
 #import <YouTubeHeader/YTAsyncCollectionView.h>
 #import <YouTubeHeader/YTColorPalette.h>
 #import <YouTubeHeader/YTELMView.h>
-#import <YouTubeHeader/YTElementsCellController.h>
 #import <YouTubeHeader/YTFullscreenEngagementActionBarButtonRenderer.h>
 #import <YouTubeHeader/YTFullscreenEngagementActionBarButtonView.h>
 #import <YouTubeHeader/YTIButtonSupportedRenderers.h>
