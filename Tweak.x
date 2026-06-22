@@ -9,6 +9,7 @@
 
 @interface ASCollectionView (RYD)
 @property (nonatomic, assign) BOOL hasDislikeIntent;
+@property (nonatomic, assign) BOOL isProbablyVideoDescriptionHeaderPanel;
 @end
 
 static NSCache <NSString *, NSDictionary *> *cache;
@@ -107,15 +108,19 @@ extern NSBundle *RYDBundle();
 int overrideNodeCreation = 0;
 
 static NSString *getElementDescription(ELMCellNode *node) {
+    HBLogDebug(@"RYD: Found node: %@", node);
     if (![node isKindOfClass:%c(ELMCellNode)]) return nil;
     ELMNodeController *controller = [node controller];
+    HBLogDebug(@"RYD: Found controller: %@", controller);
     return [[controller owningComponent] description];
 }
 
 static BOOL isVideoScrollableActionBar(ASCollectionView *collectionView, ELMCellNode *node) {
-    if ([collectionView.accessibilityIdentifier isEqualToString:@"id.video.scrollable_action_bar"])
-        return YES;
-    return [getElementDescription(node) containsString:@"compactify_video_action_bar.eml"];
+    return [collectionView.accessibilityIdentifier isEqualToString:@"id.video.scrollable_action_bar"];
+}
+
+static BOOL isVideoDescriptionHeader(ASCollectionView *collectionView, ELMCellNode *node) {
+    return [getElementDescription(node) containsString:@"video_description_header.eml"];
 }
 
 __strong ELMTextNode *likeTextNode = nil;
@@ -209,11 +214,18 @@ static void setTextColor(NSMutableAttributedString *text) {
 %hook ASCollectionView
 
 %property (nonatomic, assign) BOOL hasDislikeIntent;
+%property (nonatomic, assign) BOOL isProbablyVideoDescriptionHeaderPanel;
+
+- (void)didMoveToWindow {
+    %orig;
+    if (self.window)
+        self.isProbablyVideoDescriptionHeaderPanel = [[self _viewControllerForAncestor].navigationController isKindOfClass:%c(YTEngagementPanelNavigationController)];
+}
 
 - (ELMCellNode *)nodeForItemAtIndexPath:(NSIndexPath *)indexPath {
     ELMCellNode *node = %orig;
     if (!TweakEnabled()) return node;
-    if ([getElementDescription(node) containsString:@"video_description_header.eml"]) {
+    if (self.isProbablyVideoDescriptionHeaderPanel && isVideoDescriptionHeader(self, node)) {
         NSString *videoId = getVideoId(node);
         if (videoId == nil) return node;
         HBLogDebug(@"RYD: Found video description header");
