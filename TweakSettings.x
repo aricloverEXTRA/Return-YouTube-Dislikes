@@ -28,6 +28,10 @@ BOOL UseRYDLikeData() {
     return [[NSUserDefaults standardUserDefaults] boolForKey:UseRYDLikeDataKey];
 }
 
+BOOL TextFormat() {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:TextFormatKey];
+}
+
 void enableVoteSubmission(BOOL enabled) {
     [[NSUserDefaults standardUserDefaults] setBool:enabled forKey:EnableVoteSubmissionKey];
 }

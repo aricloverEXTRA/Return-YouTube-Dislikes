@@ -13,7 +13,7 @@ NSNumber *getLikeData(NSDictionary <NSString *, NSNumber *> *data);
 NSNumber *getDislikeData(NSDictionary <NSString *, NSNumber *> *data);
 void getVoteFromVideoWithHandler(NSCache <NSString *, NSDictionary *> *cache, NSString *videoId, int retryCount, void (^handler)(NSDictionary *d, NSString *error));
 
-#define FETCHING @"⌛"
-#define FAILED @"❌"
+#define FETCHING ([[NSUserDefaults standardUserDefaults] boolForKey:TextFormatKey] ? @"Fetching" : @"⌛")
+#define FAILED ([[NSUserDefaults standardUserDefaults] boolForKey:TextFormatKey] ? @"Failed" : @"❌")
 
 #endif
