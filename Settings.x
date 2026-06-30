@@ -28,7 +28,8 @@ NSBundle *RYDBundle() {
 - (NSArray <NSNumber *> *)orderedCategories {
     if (self.type != 1 || class_getClassMethod(objc_getClass("YTSettingsGroupData"), @selector(tweaks)))
         return %orig;
-    NSMutableArray *mutableCategories = %orig.mutableCopy;
+    NSArray *categories = %orig;
+    NSMutableArray *mutableCategories = categories.mutableCopy;
     [mutableCategories insertObject:@(RYDSection) atIndex:0];
     return mutableCategories.copy;
 }
